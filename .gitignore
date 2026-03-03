@@ -209,3 +209,15 @@ __marimo__/
 data/raw_audio/
 data/processed_audio/
 *.wav
+# macOS junk
+.DS_Store
+
+# Ignore raw audio
+data/non_scam_raw/
+
+# Ignore processed features
+processed/non_scam_features/
+
+# Python cache
+__pycache__/
+*.pyc
