@@ -1,0 +1,65 @@
+import os
+import shutil
+from sklearn.model_selection import train_test_split
+
+# ============================
+# CONFIG
+# ============================
+
+INPUT_DIR = "normalized_datasets"
+OUTPUT_DIR = "split_dataset"
+
+TRAIN_RATIO = 0.8
+
+
+def split_class(class_path, class_name):
+
+    files = [
+        f for f in os.listdir(class_path)
+        if f.lower().endswith(".wav")
+    ]
+
+    train_files, test_files = train_test_split(
+        files,
+        train_size=TRAIN_RATIO,
+        random_state=42
+    )
+
+    train_dir = os.path.join(OUTPUT_DIR, "train", class_name)
+    test_dir = os.path.join(OUTPUT_DIR, "test", class_name)
+
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(test_dir, exist_ok=True)
+
+    for file in train_files:
+        shutil.copy(
+            os.path.join(class_path, file),
+            os.path.join(train_dir, file)
+        )
+
+    for file in test_files:
+        shutil.copy(
+            os.path.join(class_path, file),
+            os.path.join(test_dir, file)
+        )
+
+
+def main():
+
+    classes = os.listdir(INPUT_DIR)
+
+    for class_name in classes:
+
+        class_path = os.path.join(INPUT_DIR, class_name)
+
+        if os.path.isdir(class_path):
+
+            print("Processing:", class_name)
+
+            split_class(class_path, class_name)
+
+    print("\nDataset splitting complete")
+
+
+if __name__ == "__main__":
+    main()
