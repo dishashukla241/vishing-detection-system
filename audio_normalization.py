@@ -8,9 +8,9 @@ import numpy as np
 # =============================
 
 DATASET_FOLDERS = [
-    "split_scamcalls",
+    "output_split_aiscamcalls",
     "standardized_realcalls",
-    "standardized_scamcalls"
+    "standardized_scamcalls_segments"
 ]
 
 OUTPUT_BASE = "normalized_datasets"
