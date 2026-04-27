@@ -226,4 +226,3 @@ processed/non_scam_features/
 __pycache__/
 *.pyc
 !standardized_scamcalls/
-split_datasets/
