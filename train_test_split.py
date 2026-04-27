@@ -9,7 +9,7 @@ DATA_DIRS = {
     "standardized_scamcalls_segments": "scam"
 }
 
-OUTPUT_DIR = "split_datasets"
+OUTPUT_DIR = "split_dataset"
 
 # Create output structure
 for split in ["train", "test"]:
