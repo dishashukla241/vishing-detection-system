@@ -84,15 +84,33 @@ text_pred = text_model.predict(X_test_text)
 # FUSION LOGIC (3-CLASS SAFE)
 # ==============================
 
-final_pred = []
 
-for a, t in zip(audio_pred, text_pred):
-    if a == t:
-        final_pred.append(a)
-    else:
-        final_pred.append(t)   # fallback
+# ==============================
+# PROBABILITY-BASED FUSION
+# ==============================
 
-final_pred = np.array(final_pred)
+# ==============================
+# MULTI-CLASS PROBABILITY FUSION
+# ==============================
+
+audio_probs = audio_model.predict_proba(X_test_audio)   # shape (n, 3)
+text_probs  = text_model.predict_proba(X_test_text)     # shape (n, 3)
+
+# weighted fusion (element-wise)
+final_probs = 0.4 * audio_probs + 0.6 * text_probs
+
+# final prediction = class with highest probability
+final_pred = np.argmax(final_probs, axis=1)
+
+# final_pred = []
+
+# for a, t in zip(audio_pred, text_pred):
+#     if a == t:
+#         final_pred.append(a)
+#     else:
+#         final_pred.append(t)   # fallback
+
+# final_pred = np.array(final_pred)"
 
 
 # ==============================
@@ -110,3 +128,9 @@ print(classification_report(y_test, text_pred))
 print("\n===== FINAL FUSION MODEL =====")
 print("Accuracy:", accuracy_score(y_test, final_pred))
 print(classification_report(y_test, final_pred))
+
+print("\nSample probabilities:")
+for i in range(5):
+    print(f"Audio: {audio_probs[i]}")
+    print(f"Text:  {text_probs[i]}")
+    print(f"Final: {final_probs[i]}")
