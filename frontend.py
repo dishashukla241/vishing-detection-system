@@ -1,17 +1,33 @@
 import streamlit as st
 from predict import predict
+import json
+import os
 
 st.set_page_config(page_title="Voice Phishing Detection", layout="centered")
 
-# --- SESSION STATE ---
+# -------------------------
+# LOAD METRICS (SAFE)
+# -------------------------
+metrics = None
+if os.path.exists("models/metrics.json"):
+    with open("models/metrics.json") as f:
+        metrics = json.load(f)
+
+# -------------------------
+# SESSION STATE
+# -------------------------
 if "page" not in st.session_state:
     st.session_state.page = "upload"
 if "score" not in st.session_state:
     st.session_state.score = None
 if "transcript" not in st.session_state:
     st.session_state.transcript = ""
+if "verdict" not in st.session_state:
+    st.session_state.verdict = ""
 
-# --- CSS ---
+# -------------------------
+# CSS
+# -------------------------
 st.markdown("""
 <style>
 .stApp { background-color: #0d0b3d; }
@@ -26,6 +42,14 @@ st.markdown("""
 
 .center {
     text-align: center;
+}
+
+.metric-box {
+    background-color: #14124f;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -43,6 +67,7 @@ if st.session_state.page == "upload":
 
             st.session_state.score = result["score"] / 100
             st.session_state.transcript = result["transcript"]
+            st.session_state.verdict = result["verdict"]
 
             st.session_state.page = "result"
             st.rerun()
@@ -54,7 +79,7 @@ elif st.session_state.page == "result":
 
     percent = int(st.session_state.score * 100)
 
-    # --- Risk Levels ---
+    # Risk levels
     if percent < 25:
         color = "#00ff9f"
         label = "Safe"
@@ -70,7 +95,7 @@ elif st.session_state.page == "result":
 
     st.markdown('<div class="title">Analysis Result</div>', unsafe_allow_html=True)
 
-    # --- CIRCULAR GAUGE ---
+    # ------------------ GAUGE ------------------
     st.markdown(f"""
 <div style="display:flex; justify-content:center; align-items:center; margin-top:30px;">
     <div style="
@@ -112,17 +137,43 @@ elif st.session_state.page == "result":
 </div>
 """, unsafe_allow_html=True)
 
-    # --- MESSAGE ---
+    # ------------------ VERDICT ------------------
     st.markdown(
         f"<h3 style='text-align:center; color:{color}; margin-top:30px;'>⚠️ {label}</h3>",
         unsafe_allow_html=True
     )
 
+    # ------------------ TRANSCRIPT ------------------
+ 
 
-    # --- TRANSCRIPT ---
+    # ------------------ METRICS ------------------
+    if metrics:
+        st.markdown("###  Model Performance")
 
+        col1, col2, col3 = st.columns(3)
 
-    # --- LEGEND ---
+        with col1:
+            st.markdown("#### Audio")
+            st.write(f"Accuracy: {metrics['audio']['accuracy']:.2f}")
+            st.write(f"Precision: {metrics['audio']['precision']:.2f}")
+            st.write(f"Recall: {metrics['audio']['recall']:.2f}")
+            st.write(f"F1: {metrics['audio']['f1']:.2f}")
+
+        with col2:
+            st.markdown("#### Text")
+            st.write(f"Accuracy: {metrics['text']['accuracy']:.2f}")
+            st.write(f"Precision: {metrics['text']['precision']:.2f}")
+            st.write(f"Recall: {metrics['text']['recall']:.2f}")
+            st.write(f"F1: {metrics['text']['f1']:.2f}")
+
+        with col3:
+            st.markdown("#### Fusion")
+            st.write(f"Accuracy: {metrics['fusion']['accuracy']:.2f}")
+            st.write(f"Precision: {metrics['fusion']['precision']:.2f}")
+            st.write(f"Recall: {metrics['fusion']['recall']:.2f}")
+            st.write(f"F1: {metrics['fusion']['f1']:.2f}")
+
+    # ------------------ LEGEND ------------------
     st.markdown("""
     <div style='margin-top:30px; text-align:center;'>
 
@@ -137,11 +188,12 @@ elif st.session_state.page == "result":
     </div>
     """, unsafe_allow_html=True)
 
-    # --- BACK BUTTON ---
+    # ------------------ BACK BUTTON ------------------
     st.markdown("<div class='center'>", unsafe_allow_html=True)
     if st.button("Back"):
         st.session_state.page = "upload"
         st.session_state.score = None
         st.session_state.transcript = ""
+        st.session_state.verdict = ""
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
