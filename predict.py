@@ -29,7 +29,7 @@ def predict(uploaded_file):
             transcript = ""
 
         # -------------------------
-        # FEATURES
+        # FEATURE EXTRACTION
         # -------------------------
         audio_features = extract_features(temp_path)
         audio_features = scaler.transform([audio_features])
@@ -43,23 +43,22 @@ def predict(uploaded_file):
         text_prob = text_model.predict_proba(text_vector)[0]
 
         # -------------------------
-        # FUSION (text slightly stronger)
+        # FUSION
         # -------------------------
-        final_prob = 0.3 * audio_prob + 0.7 * text_prob
-
-        scam_score = final_prob[1]
-        real_score = final_prob[0]
+        final_prob = 0.5 * audio_prob + 0.5 * text_prob
 
         # -------------------------
-        # STRONGER SEPARATION LOGIC
+        # MULTI-CLASS SCORING (FINAL CALIBRATION)
         # -------------------------
-        confidence = scam_score - real_score  # -1 to +1
+        # index: 0 = real, 1 = scam, 2 = ai_scam
+        real_prob = final_prob[0]
 
-        # Push neutral cases downward
-        if abs(confidence) < 0.15:
-            confidence -= 0.2
+        # Boost AI scam slightly
+        scam_prob = final_prob[1] + 1.5 * final_prob[2]
+        scam_prob = min(scam_prob, 1.0)
 
-        score = int((confidence + 1) * 50)
+        # Apply curve + downward shift
+        score = int((scam_prob ** 1.4) * 100) - 10
 
         # -------------------------
         # KEYWORD BOOST (controlled)
@@ -74,9 +73,9 @@ def predict(uploaded_file):
         boost = sum(1 for word in scam_keywords if word in text)
 
         if boost >= 2:
-            score += 15
+            score += 10
         elif boost == 1:
-            score += 5
+            score += 4
 
         # -------------------------
         # NORMAL SPEECH PENALTY
@@ -84,19 +83,21 @@ def predict(uploaded_file):
         normal_keywords = ["hello", "thank you", "okay", "meeting"]
 
         if any(word in text for word in normal_keywords) and boost == 0:
-            score -= 15
+            score -= 10
 
-        # Clamp score
+        # -------------------------
+        # CLAMP SCORE
+        # -------------------------
         score = max(0, min(score, 100))
 
         # -------------------------
-        # VERDICT
+        # FINAL VERDICT
         # -------------------------
         if score > 75:
             verdict = "Likely Scam"
-        elif score > 60:
+        elif score > 55:
             verdict = "Suspicious"
-        elif score > 35:
+        elif score > 30:
             verdict = "Caution"
         else:
             verdict = "Safe"
@@ -104,7 +105,12 @@ def predict(uploaded_file):
         return {
             "score": score,
             "verdict": verdict,
-            "transcript": transcript
+            "transcript": transcript,
+            "probabilities": {
+                "real": float(real_prob),
+                "scam": float(final_prob[1]),
+                "ai_scam": float(final_prob[2])
+            }
         }
 
     finally:

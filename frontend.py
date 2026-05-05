@@ -118,6 +118,7 @@ elif st.session_state.page == "result":
         unsafe_allow_html=True
     )
 
+
     # --- TRANSCRIPT ---
 
 

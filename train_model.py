@@ -19,33 +19,24 @@ y = np.load("features/y.npy")
 # LOAD TEXT DATA
 # -------------------------
 text_df = pd.read_csv("transcripts.csv")
-
-# Clean text
-text_df["transcript"] = text_df["transcript"].fillna("").astype(str)
-
-# Remove empty / very short transcripts
-valid_idx = text_df["transcript"].str.strip().str.len() > 10
-
-X_text_raw = text_df.loc[valid_idx, "transcript"].reset_index(drop=True)
-X_audio = X_audio[valid_idx.values]
-y = y[valid_idx.values]
-
-# Ensure alignment
-y = y[:len(X_text_raw)]
+X_text_raw = text_df["transcript"].fillna("").astype(str)
 
 # -------------------------
-# CHECK
+# 🔍 ALIGNMENT CHECK (VERY IMPORTANT)
 # -------------------------
 print("Audio samples:", X_audio.shape[0])
 print("Text samples:", len(X_text_raw))
 print("Labels:", y.shape[0])
 
+assert X_audio.shape[0] == len(X_text_raw) == y.shape[0], "❌ Data mismatch!"
+
+# Show sample mapping
 print("\nSample check:")
 for i in range(3):
-    print(f"Label: {y[i]} | Text: {X_text_raw.iloc[i][:50]}")
+    print(f"Label: {y[i]} | Text: {X_text_raw[i][:50]}")
 
 # -------------------------
-# TEXT FEATURES
+# TEXT PROCESSING (IMPROVED)
 # -------------------------
 vectorizer = TfidfVectorizer(
     max_features=10000,
@@ -62,7 +53,7 @@ scaler = StandardScaler()
 X_audio_scaled = scaler.fit_transform(X_audio)
 
 # -------------------------
-# SPLIT
+# SINGLE SPLIT (CORRECT)
 # -------------------------
 Xa_train, Xa_test, Xt_train, Xt_test, y_train, y_test = train_test_split(
     X_audio_scaled,
@@ -73,7 +64,7 @@ Xa_train, Xa_test, Xt_train, Xt_test, y_train, y_test = train_test_split(
 )
 
 # -------------------------
-# MODELS
+# BETTER MODELS
 # -------------------------
 audio_model = GradientBoostingClassifier()
 text_model = GradientBoostingClassifier()
