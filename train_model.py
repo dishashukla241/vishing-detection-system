@@ -10,26 +10,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-# -------------------------
-# LOAD AUDIO FEATURES
-# -------------------------
+
 X_audio = np.load("features/x.npy")
 y = np.load("features/y.npy")
 
-# -------------------------
-# LOAD TEXT DATA
-# -------------------------
+
 text_df = pd.read_csv("transcripts.csv")
 X_text_raw = text_df["transcript"].fillna("").astype(str)
 
-# -------------------------
-# ALIGNMENT CHECK
-# -------------------------
 assert X_audio.shape[0] == len(X_text_raw) == y.shape[0], "Data mismatch!"
 
-# -------------------------
-# TEXT FEATURES
-# -------------------------
+
 vectorizer = TfidfVectorizer(
     max_features=10000,
     ngram_range=(1, 3),
@@ -38,14 +29,11 @@ vectorizer = TfidfVectorizer(
 
 X_text = vectorizer.fit_transform(X_text_raw)
 
-# -------------------------
-# AUDIO SCALING
-# -------------------------
+
 scaler = StandardScaler()
 X_audio_scaled = scaler.fit_transform(X_audio)
 
-# -------------------------
-# SPLIT
+
 # -------------------------
 Xa_train, Xa_test, Xt_train, Xt_test, y_train, y_test = train_test_split(
     X_audio_scaled,
@@ -55,9 +43,7 @@ Xa_train, Xa_test, Xt_train, Xt_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
-# -------------------------
-# MODELS
-# -------------------------
+
 audio_model = GradientBoostingClassifier()
 text_model = GradientBoostingClassifier()
 
@@ -71,7 +57,7 @@ audio_pred = audio_model.predict(Xa_test)
 text_pred = text_model.predict(Xt_test)
 
 # -------------------------
-# FUSION (IMPORTANT)
+# FUSION
 # -------------------------
 audio_probs = audio_model.predict_proba(Xa_test)
 text_probs = text_model.predict_proba(Xt_test)
